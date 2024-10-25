@@ -1,4 +1,7 @@
+import tkinter.messagebox
+
 import ttkbootstrap as tk
+import ttkbootstrap.dialogs
 from ttkbootstrap.constants import *
 from PIL import Image, ImageTk
 
@@ -7,6 +10,8 @@ class MainWindow(tk.Window):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.clicks = 0
+        self.booster = 1
+
         self.title('Capybara Game')
         self.geometry('800x600')
 
@@ -74,7 +79,7 @@ class MainWindow(tk.Window):
         self.capybara_button.config(image=self.capybara_button_image)
 
     def capybara_click(self):
-        self.clicks += 1
+        self.clicks += self.booster
         self.clicksLabel['text'] = f'{self.clicks} капибарных монет'
 
     def open_shop(self):
@@ -83,21 +88,47 @@ class MainWindow(tk.Window):
 
 
 class ShopWindow(tk.Toplevel):
-    def __init__(self, main_window: tk.Window, *args, **kwargs):
+    booster_price = 10
+
+    def __init__(self, main_window: MainWindow, *args, **kwargs):
         super().__init__(master=main_window, *args, **kwargs)
 
         self.title('Capybara Shop')
         self.geometry('800x600')
         self.main_window = main_window
+        self.msg = tk.Label(self, font=('Helvetica', 24))
 
         self.protocol("WM_DELETE_WINDOW", self.close_shop_window)
 
-        self.shop_button = tk.Button(text='Вернуться', style=OUTLINE, command=self.close_shop_window)
+        self.shop_button = tk.Button(self, text='Вернуться', style=OUTLINE, command=self.close_shop_window)
         self.shop_button.pack(side=TOP, anchor=NE, pady=25, padx=25)
 
+        self.buy_button = tk.Button(self,
+                                    text=f'Бустер кликерок x2 за {ShopWindow.booster_price} монет',
+                                    style=OUTLINE,
+                                    command=self.buy_prikol)
+        self.buy_button.pack(anchor=CENTER)
+
     def close_shop_window(self):
-        self.destroy()
+        self.withdraw()
         self.main_window.deiconify()
+
+    def buy_prikol(self):
+        if self.main_window.clicks >= ShopWindow.booster_price:
+            self.main_window.booster *= 2
+            self.main_window.clicks -= ShopWindow.booster_price
+            ShopWindow.booster_price *= 3
+
+            self.buy_button.configure(text=f'Бустер кликерок x2 за {ShopWindow.booster_price} монет')
+            self.main_window.clicksLabel.configure(text=f'{self.main_window.clicks} капибарных монет')
+
+            self.msg['text'] = 'Вы успешно купили бустер'
+            # self.msg['style'] = SUCCESS
+            self.msg.pack()
+        else:
+            self.msg['text'] = 'Недостаточно монет'
+            # self.msg['style'] = WARNING
+            self.msg.pack()
 
 
 if __name__ == '__main__':
